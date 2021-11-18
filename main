@@ -1,0 +1,1803 @@
+using namespace  std ;
+bool game_over = false ;
+bool canplaylandcard = true;
+class card {
+protected:
+    string name  ;
+    string color ;
+
+public:
+
+    card( string n,string c) : name(n) , color(c) {
+
+    }
+   // string  virtual giv_mana() {};
+
+    string getName() {
+        return name ;
+    }
+    string getColor() {
+        return color;
+    }
+
+};
+
+
+class landcard : public card {
+protected:
+    vector<string> name;
+    char giving_mana ;
+    bool tapped ;
+
+public:
+
+    bool TAPcondition (){
+        return tapped ;
+    }
+
+    void changecondition ( bool x ){
+        tapped = x ;
+    }
+    char get_giving_mana(){
+        return giving_mana ;
+    }
+
+    landcard(string n  , string c) : card(n,c){
+        tapped = false;
+        if(n == "Forest") {
+            giving_mana = 'G';
+        }
+        if(n == "Island") {
+            giving_mana = 'L';
+        }
+        if(n == "Mountain") {
+            giving_mana = 'R';
+        }
+        if(n  == "Plains") {
+            giving_mana = 'W';
+        }
+        if(n  == "Swamp") {
+            giving_mana = 'B';
+        }
+
+    }
+
+
+};
+
+class creatureCard : public card {
+protected:
+    string base_ability ;
+    int HP;
+    int attack_power;
+    int base_HP;
+    int base_attack_power;
+    string mana_cost_S;
+    string ability;
+    bool tapped  = false ;
+    map<char,int> mana_cost ;
+    char mana [5] {'G','B','W','R','L'};
+
+public:
+    creatureCard(string n, string c, int H, int a, string m) : card(n, c), HP(H), attack_power(a), mana_cost_S(m) {
+        base_HP = H ;
+        base_attack_power = a ;
+        fillAvailableMana();
+        if (n == "White_Knight" || n == "Black_Knight") {
+            ability = "First strike";
+        }
+        else if (n == "Angry_Bear" || n == "Werewolf") {
+            ability = "Trample";
+        }
+        else {
+            ability = "None";
+        }
+        base_ability = ability ;
+    }
+    // Function to count the occurrence of each character mana
+    int countMana(string str, char x) {
+        int count = 0 ;
+        for (int i = 0; i < str.size(); i++){
+            if (str[i] == x)
+                count++;
+    }
+        return count;
+    }
+    int get_attack_damage (){
+    return attack_power ;
+    }
+    void fillAvailableMana() {
+
+        for(auto i = 0; i < mana_cost_S.length(); i++) {
+
+            for(auto j = 0; j < 5; j++) {
+                mana_cost.insert({mana[j],countMana(mana_cost_S,mana[j])});
+            }
+            char y = (mana_cost_S[i]) ;
+            if (isdigit(y)) {
+               mana_cost.insert({'C', int(mana_cost_S[i]) -48 }); // 'C' represents colorless mana
+            }
+        }
+
+
+    }
+    void return_to_base(){
+        HP = base_HP ;
+        attack_power = base_attack_power ;
+        ability = base_ability ;
+    }
+    void setAbility (string x ) {
+        ability = x ;
+    }
+
+
+    map<char,int> getmanacost(){
+        return mana_cost ;
+    }
+
+    bool TAPcondition (){
+        return tapped ;
+    }
+
+    void changecondition ( bool x ){
+        tapped = x ;
+    }
+
+    bool has_first_strike (){
+        if ( ability == "First strike"){
+            return  true ;
+        }
+        else { return false ; }
+    }
+
+    bool has_trample(){
+        if ( ability == "Trample"){
+            return  true ;
+        }
+        else { return false ; }
+    }
+    int get_HP (){
+        return  HP ;
+    }
+    void change_HP (int x , bool msg){
+        HP += x ;
+
+            if (HP > 0) {
+                if (msg) { cout << name << " has survived the combat and it's HP is  : " << HP << endl;}
+            } else {
+                cout << name << " has died in the combat as a hero  " << endl;
+            }
+
+
+
+    }
+    void change_AP (int x ){
+        attack_power += x ;
+    }
+
+};
+
+class EnchantmentCard : public card {
+protected:
+    string mana_cost_S   ;
+    string effect ;
+    map<char,int> mana_cost ;
+    char mana [5] {'G','B','W','R','L'};
+public:
+    EnchantmentCard(string n  , string c , string m , string e) : card(n,c) , mana_cost_S(m) , effect(e) {
+        fillAvailableMana();
+    }
+    map<char,int> getmanacost(){
+        return mana_cost ;
+    }
+    int countMana(string str, char x) {
+        int count = 0 ;
+        for (int i = 0; i < str.size(); i++){
+            if (str[i] == x)
+                count++;
+        }
+        return count;
+    }
+    void fillAvailableMana() {
+
+        for(auto i = 0; i < mana_cost_S.length(); i++) {
+
+            for(auto j = 0; j < 5; j++) {
+                mana_cost.insert({mana[j],countMana(mana_cost_S,mana[j])});
+            }
+            char y = (mana_cost_S[i]) ;
+            if (isdigit(y)) {
+                mana_cost.insert({'C', int(mana_cost_S[i]) -48 }); // 'C' represents colorless mana
+            }
+        }
+
+
+    }
+
+};
+
+class SorceryCard : public  card{
+protected:
+    string mana_cost_S ;
+    string effect ;
+    map<char,int> mana_cost ;
+    char mana [5] {'G','B','W','R','L'};
+public:
+
+    SorceryCard(string n  , string c , string m , string e) : card(n, c) , mana_cost_S(m) , effect(e) {
+        fillAvailableMana();
+    }
+
+    map<char,int> getmanacost(){
+        return mana_cost ;
+    }
+    int countMana(string str, char x) {
+        int count = 0 ;
+        for (int i = 0; i < str.size(); i++){
+            if (str[i] == x)
+                count++;
+        }
+        return count;
+    }
+    void fillAvailableMana() {
+
+        for(auto i = 0; i < mana_cost_S.length(); i++) {
+
+            for(auto j = 0; j < 5; j++) {
+                mana_cost.insert({mana[j],countMana(mana_cost_S,mana[j])});
+            }
+            char y = (mana_cost_S[i]) ;
+            if (isdigit(y)) {
+                mana_cost.insert({'C', int(mana_cost_S[i]) -48 }); // 'C' represents colorless mana
+            }
+        }
+
+
+    }
+};
+
+
+class player {
+protected:
+    tuple<vector<landcard>,vector<creatureCard>,vector<SorceryCard>,vector<EnchantmentCard>> in_Play ,  in_Hand  , Deck ;
+    vector<creatureCard> graveyard ;
+    int Deck1_size [4];
+    int HP = 15 ;
+    int maxHP  = 15 ;
+    map<char,int> available_mana;
+    char mana [5] {'G','B','W','R','L'};
+public:
+
+    int Get_HP () {
+        return HP ;
+    }
+    void setmana(){
+        for(int  j = 0; j < 5; j++) {
+            available_mana.insert({mana[j],0});
+        }
+
+    }
+    tuple<vector<landcard>,vector<creatureCard>,vector<SorceryCard>,vector<EnchantmentCard>> what_is_the_Hand(){
+        return in_Hand ;
+    }
+
+    tuple<vector<landcard>,vector<creatureCard>,vector<SorceryCard>,vector<EnchantmentCard>> get_in_play(){
+        return in_Play ;
+    }
+    vector<creatureCard> get_in_graveyard(){
+        return graveyard ;
+    }
+    void remove_graveyard(int x ) {
+            graveyard.erase(graveyard.begin() + x);
+    }
+    void add_to_graveyard (creatureCard x){
+        graveyard.insert(graveyard.begin() , x ) ;
+    }
+
+    void insertland_card_toHand (landcard x ){
+        get<0> (in_Hand).push_back(x);
+    }
+    void insertcreature_card_toHand (creatureCard x ){
+        get<1> (in_Hand).push_back(x);
+    }
+    void insertsorcery_card_toHand (SorceryCard x ){
+        get<2> (in_Hand).push_back(x);
+    }
+    void insertenchantment_card_toHand (EnchantmentCard x ){
+        get<3> (in_Hand).push_back(x);
+    }
+
+    void insertdeck ( tuple<vector<landcard>,vector<creatureCard>,vector<SorceryCard>,vector<EnchantmentCard>> x ){
+       Deck = x;
+    }
+
+
+    void insertland_card_toPlayPile (landcard x ){
+        get<0> (in_Play).push_back(x);
+    }
+    void insertcreature_card_toPlayPile (creatureCard x ){
+        get<1> (in_Play).push_back(x);
+    }
+    void insertsorcery_card_toPlayPile (SorceryCard x ){
+        get<2> (in_Play).push_back(x);
+    }
+    void insertenchantment_card_toPlayPile (EnchantmentCard x ){
+        get<3> (in_Play).push_back(x);
+    }
+
+
+    void change_creature_HP_inPlay(int pos , int hp , bool msg){
+        get<1>(in_Play).at(pos).change_HP(hp , msg);
+    }
+    void change_creature_HP_inHand(int pos , int hp , bool msg){
+        get<1>(in_Hand).at(pos).change_HP(hp , msg);
+    }
+
+    void change_creature_AP_inPlay(int pos , int ap){
+        get<1>(in_Play).at(pos).change_AP(ap);
+    }
+    void change_creature_AP_inHand(int pos , int ap){
+        get<1>(in_Hand).at(pos).change_AP(ap);
+    }
+
+    void change_creature_tap(int pos ,bool tap){
+        get<1>(in_Play).at(pos).changecondition(tap);
+    }
+    void change_creature_ability(int pos , string ab ){
+        get<1>(in_Play).at(pos).setAbility(ab);
+    }
+    int get_creature_HP(int pos){
+       return get<1>(in_Play).at(pos).get_HP();
+    }
+
+    void check_creature(int pos){
+        if (get<1>(in_Play).at(pos).get_HP() <= 0 ){
+            graveyard.push_back(get<1>(in_Play).at(pos)) ;
+            get<1>(in_Play).erase(get<1>(in_Play).begin() + pos ) ;
+        }
+    }
+
+
+    map<char,int> getmanacost(){
+        return available_mana ;
+    }
+
+    bool Draw() {
+        if(Deck1_size[0] == 0 || Deck1_size[1] == 0 || Deck1_size[2] == 0 || Deck1_size[3] == 0){
+            cout << "You lost the game because your Deck is empty :( " << endl ;
+            game_over = true ;
+            return false ;
+        }
+        if ((get<0>(in_Hand).size()+get<1>(in_Hand).size()+get<2>(in_Hand).size()+get<3>(in_Hand).size()) < 7) {
+            return true;
+        } else {
+            cout << "You can't draw a card" << endl;
+            return false;
+
+        }
+    }
+
+
+        void DrawCard() {
+
+            Deck1_size[0] = get<0> (Deck).size() ;
+            Deck1_size[1] = get<1> (Deck).size() ;
+            Deck1_size[2] = get<2> (Deck).size() ;
+            Deck1_size[3] = get<3> (Deck).size() ;
+
+            int random;
+            random = rand() % (Deck1_size[0] + Deck1_size[1] + Deck1_size[2] + Deck1_size[3] - 1);
+            if (random < Deck1_size[0]) {
+                insertland_card_toHand(get<0>(Deck).at(random));
+                get<0>(Deck).erase(get<0>(Deck).begin() + (random));
+                Deck1_size[0]--;
+            } else if (random < (Deck1_size[1] + Deck1_size[0])) {
+                insertcreature_card_toHand(get<1>(Deck).at(random - Deck1_size[0]));
+                get<1>(Deck).erase(get<1>(Deck).begin() + (random - Deck1_size[0]));
+                Deck1_size[1]--;
+            } else if (random < (Deck1_size[0] + Deck1_size[1] + Deck1_size[2])) {
+                insertsorcery_card_toHand(get<2>(Deck).at(random - Deck1_size[0] - Deck1_size[1]));
+                get<2>(Deck).erase(get<2>(Deck).begin() + (random - Deck1_size[0] - Deck1_size[1]));
+                Deck1_size[2]--;
+            } else {
+                insertenchantment_card_toHand(get<3>(Deck).at(random - Deck1_size[0] - Deck1_size[1] - Deck1_size[2]));
+                get<3>(Deck).erase(get<3>(Deck).begin() + (random - Deck1_size[0] - Deck1_size[1] - Deck1_size[2]));
+                Deck1_size[3]--;
+            }
+
+        }
+
+
+        void tap_land_card(){
+        cout << " Which card do you want to tap ?  \n " ;
+        string index ;
+        cin >> index ;
+        for (int i =0 ; i < get<0>(in_Play).size() ; i++){
+            if (get<0>(in_Play).at(i).getName() == index && !get<0>(in_Play).at(i).TAPcondition()){
+
+                get<0>(in_Play).at(i).changecondition(true) ;
+                char color = get<0>(in_Play).at(i).get_giving_mana();
+                   available_mana[color] ++;
+                 cout << "the card " << get<0>(in_Play).at(i).getName() << " Has been tapped " << endl ;
+                 print_mana();
+                return;
+            }
+        }
+
+        cout << "You dont have a such card in play pile or it has been already tapped   \n " ;
+
+    }
+
+    void remove_hand_card(int x , string y){
+
+        if ( y == "L"){
+            get<0>(in_Hand).erase(get<0>(in_Hand).begin() + x ) ;
+        }
+        else if ( y == "C"){
+            get<1>(in_Hand).erase(get<1>(in_Hand).begin() + x ) ;
+        }
+        else if ( y == "S"){
+            get<2>(in_Hand).erase(get<2>(in_Hand).begin() + x ) ;
+        }
+        else if ( y == "E"){
+            get<3>(in_Hand).erase(get<3>(in_Hand).begin() + x ) ;
+        }
+
+    }
+
+    void remove_play_pile(int x , string y){
+
+        if ( y == "L"){
+            get<0>(in_Play).erase(get<0>(in_Play).begin() + x ) ;
+        }
+        else if ( y == "C"){
+            get<1>(in_Play).erase(get<1>(in_Play).begin() + x ) ;
+        }
+        else if ( y == "S"){
+            get<2>(in_Play).erase(get<2>(in_Play).begin() + x ) ;
+        }
+        else if ( y == "E"){
+            get<3>(in_Play).erase(get<3>(in_Play).begin() + x ) ;
+        }
+
+    }
+
+
+
+    void printthehand (){
+        for ( int i =0 ; i < get<0>(in_Hand).size() ; i++){
+            cout << get<0>(in_Hand).at(i).getName() << " , " ;
+
+        }
+        for ( int i =0 ; i < get<1>(in_Hand).size() ; i++){
+            cout << get<1>(in_Hand).at(i).getName() << " , " ;
+
+        }
+        for ( int i =0 ; i < get<2>(in_Hand).size() ; i++){
+            cout << get<2>(in_Hand).at(i).getName() << " , " ;
+
+        }
+        for ( int i =0 ; i < get<3>(in_Hand).size() ; i++){
+            cout << get<3>(in_Hand).at(i).getName() ;
+            if ( i < get<3>(in_Hand).size()-1){
+                cout << " , " ;
+            }
+            else {
+                cout << "  " ;
+            }
+        }
+
+    }
+
+    void printtheplay (){
+        for ( int i =0 ; i < get<0>(in_Play).size() ; i++){
+            cout << get<0>(in_Play).at(i).getName() << " , " ;
+
+        }
+        for ( int i =0 ; i < get<1>(in_Play).size() ; i++){
+            cout << get<1>(in_Play).at(i).getName() << " , " ;
+
+        }
+        for ( int i =0 ; i < get<2>(in_Play).size() ; i++){
+            cout << get<2>(in_Play).at(i).getName() << " , " ;
+
+        }
+        for ( int i =0 ; i < get<3>(in_Play).size() ; i++){
+            cout << get<3>(in_Play).at(i).getName() ;
+            if ( i < get<3>(in_Play).size()-1){
+                cout << " , " ;
+            }
+            else {
+                cout << "  " ;
+            }
+        }
+
+    }
+
+    void Un_Tap_All_Cards(){
+        for ( int i =0 ; i < get<0>(in_Play).size() ; i++ ){
+            get<0>(in_Play).at(i).changecondition(false) ;
+
+        }
+        for ( int i =0 ; i < get<1>(in_Play).size() ; i++ ){
+            get<1>(in_Play).at(i).changecondition(false) ;
+
+        }
+
+    }
+
+    void landfunction (){
+        string  index ;
+        cout << "Enter the land_card name which you want to play " << endl ;
+        cin >> index ;
+        for ( int i =0  ; i < get<0>(in_Hand).size() ; i++ ){
+            if (get<0>(in_Hand).at(i).getName() == index  ){
+                insertland_card_toPlayPile(get<0>(in_Hand).at(i)) ;
+                remove_hand_card(i,"L") ;
+                canplaylandcard = false;
+                cout <<  index  << " card has been played "  <<  endl ;
+                return;
+            }
+        }
+
+        cout <<  " you don't have " << index << " card" <<  endl ;
+    }
+
+
+    void creatureFunction () {
+        string index;
+        cout << " What is the creature which you want to play ?? " << endl;
+        cin >> index;
+        for ( int i =0  ; i < get<1>(in_Hand).size() ; i++ ){
+            if (get<1>(in_Hand).at(i).getName() == index){
+                map<char,int> x = get<1>(in_Hand).at(i).getmanacost();
+                map<char, int>::iterator it;
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << x[mana[i]] << endl ;
+//                }
+//                cout << x['C'] << endl ;
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << available_mana[mana[i]] << endl ;
+//                }
+
+                int creature_mana[6] ;
+                int z =0 ;
+                for(it=x.begin(); it!=x.end(); ++it){
+                    if (z > 0){
+                        if (z == 1 ){
+                            creature_mana[5] = it->second;
+                        }
+                       else {
+                            creature_mana[z-1] = it->second;
+                       }
+                    }
+                    else {
+                        creature_mana[z] = it->second;
+                    }
+                    z++ ;
+                }
+
+                 x = available_mana;
+                int player_mana[5] ;
+                 z =0 ;
+                for(it=available_mana.begin(); it!=available_mana.end(); ++it){
+                    player_mana[z]= it->second ;
+                    z++ ;
+                }
+
+//                cout << "----------creature_mana------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << creature_mana[i] << "," ;
+//                }
+//                cout << creature_mana[5] << endl ;
+//                cout << "------------player_mana----------" << endl ;
+//
+//                for ( int i = 0 ; i < 5 ; i ++ ) {
+//                    cout << player_mana[i] << ",";
+//                }
+//                cout <<  endl << "----------------------" << endl ;
+                    int totalplayermana  = 0, totalcreaturemana = 0 ;
+                for ( int i =0 ; i < 5 ; i++){
+                   if ( player_mana[i] >= creature_mana[i]){
+                       totalplayermana += player_mana[i] ;
+                       totalcreaturemana += creature_mana[i] ;
+                   }
+                   else {
+                       cout << " You dont have enough mana " << endl ;
+                       return;
+                   }
+                }
+                totalcreaturemana += creature_mana[5];
+                if (totalplayermana >= totalcreaturemana) {
+
+                    for (int i = 0; i < 5; i++) {
+                        player_mana[i] -= creature_mana[i];
+                    }
+                    int colorlessmana = creature_mana[5];
+                    z = 0 ;
+                    while (colorlessmana != 0) {
+
+                        if ( player_mana[z] > 0){
+                            player_mana[z] -- ;
+                            colorlessmana --;
+
+                        }
+
+                        z++ ;
+                        if(z == 5){
+                            z = 0 ;
+                        }
+                    }
+
+                    }
+                else {
+                    cout << " You don't have enough mana  " << endl ;
+                    return;
+                }
+
+                available_mana['B'] = player_mana[0];
+                available_mana['G'] = player_mana[1];
+                available_mana['L'] = player_mana[2];
+                available_mana['R'] = player_mana[3];
+                available_mana['W'] = player_mana[4];
+
+                insertcreature_card_toPlayPile(get<1>(in_Hand).at(i)) ;
+                remove_hand_card(i,"C") ;
+                cout <<  index  << " card has been played "  <<  endl ;
+                return;
+            }
+
+        }
+       cout << " You dont have such card "  << endl ;
+
+    }
+
+    string enchantmentFunction () {
+        string index;
+        cout << " What is the enchantment_card which you want to play ?? " << endl;
+        cin >> index;
+        for ( int i =0  ; i < get<3>(in_Hand).size() ; i++ ){
+            if (get<3>(in_Hand).at(i).getName() == index){
+                map<char,int> x = get<3>(in_Hand).at(i).getmanacost();
+                map<char, int>::iterator it;
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << x[mana[i]] << endl ;
+//                }
+//                cout << x['C'] << endl ;
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << available_mana[mana[i]] << endl ;
+//                }
+
+                int creature_mana [6] ;
+                int z =0 ;
+                for(it=x.begin(); it!=x.end(); ++it){
+                    if (z > 0){
+                        if (z == 1 ){
+                            creature_mana[5] = it->second;
+                        }
+                        else {
+                            creature_mana[z-1] = it->second;
+                        }
+                    }
+                    else {
+                        creature_mana[z] = it->second;
+                    }
+                    z++ ;
+                }
+
+                x = available_mana;
+                int player_mana[5] ;
+                z =0 ;
+                for(it=available_mana.begin(); it!=available_mana.end(); ++it){
+                    player_mana[z]= it->second ;
+                    z++ ;
+                }
+//
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << creature_mana[i] << endl ;
+//                }
+//                cout << creature_mana[5] << endl ;
+//                cout << "----------------------" << endl ;
+//
+//                for ( int i = 0 ; i < 5 ; i ++ ) {
+//                    cout << player_mana[i] << endl;
+//                }
+//                cout << "----------------------" << endl ;
+                int totalplayermana  = 0, totalcreaturemana = 0 ;
+                for ( int i =0 ; i < 5 ; i++){
+                    if ( player_mana[i] >= creature_mana[i]){
+                        totalplayermana += player_mana[i] ;
+                        totalcreaturemana += creature_mana[i] ;
+                    }
+                    else {
+                        cout << " You dont have enough mana " << endl ;
+                        return "";
+                    }
+                }
+                totalcreaturemana += creature_mana[5];
+                if (totalplayermana >= totalcreaturemana) {
+
+                    for (int i = 0; i < 5; i++) {
+                        player_mana[i] -= creature_mana[i];
+                    }
+                    int colorlessmana = creature_mana[5];
+                    z = 0 ;
+                    while (colorlessmana != 0) {
+
+                        if ( player_mana[z] > 0){
+                            player_mana[z] -- ;
+                            colorlessmana --;
+
+                        }
+
+                        z++ ;
+                        if(z == 5){
+                            z = 0 ;
+                        }
+                    }
+
+                }
+                else {
+                    cout << " You don't have enough mana  " << endl ;
+                    return "";
+                }
+
+                available_mana['B'] = player_mana[0];
+                available_mana['G'] = player_mana[1];
+                available_mana['L'] = player_mana[2];
+                available_mana['R'] = player_mana[3];
+                available_mana['W'] = player_mana[4];
+
+                insertenchantment_card_toPlayPile(get<3>(in_Hand).at(i)) ;
+                remove_hand_card(i,"E") ;
+                cout <<  index  << " card has been played "  <<  endl ;
+                return  index ;
+            }
+        }
+        cout << " You dont have such card "  << endl ;
+        }
+    string  sorceryFunction () {
+        string index;
+        cout << " What is the sorcery_card which you want to play ?? " << endl;
+        cin >> index;
+        for ( int i =0  ; i < get<2>(in_Hand).size() ; i++ ){
+            if (get<2>(in_Hand).at(i).getName() == index){
+                map<char,int> x = get<2>(in_Hand).at(i).getmanacost();
+                map<char, int>::iterator it;
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << x[mana[i]] << endl ;
+//                }
+//                cout << x['C'] << endl ;
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << available_mana[mana[i]] << endl ;
+//                }
+
+                int creature_mana [6] ;
+                int z =0 ;
+                for(it=x.begin(); it!=x.end(); ++it){
+                    if (z > 0){
+                        if (z == 1 ){
+                            creature_mana[5] = it->second;
+                        }
+                        else {
+                            creature_mana[z-1] = it->second;
+                        }
+                    }
+                    else {
+                        creature_mana[z] = it->second;
+                    }
+                    z++ ;
+                }
+
+                x = available_mana;
+                int player_mana[5] ;
+                z =0 ;
+                for(it=available_mana.begin(); it!=available_mana.end(); ++it){
+                    player_mana[z]= it->second ;
+                    z++ ;
+                }
+//
+//                cout << "----------------------" << endl ;
+//                for ( int i = 0 ; i < 5 ; i ++ ){
+//                    cout << creature_mana[i] << endl ;
+//                }
+//                cout << creature_mana[5] << endl ;
+//                cout << "----------------------" << endl ;
+//
+//                for ( int i = 0 ; i < 5 ; i ++ ) {
+//                    cout << player_mana[i] << endl;
+//                }
+//                cout << "----------------------" << endl ;
+                int totalplayermana  = 0, totalcreaturemana = 0 ;
+                for ( int i =0 ; i < 5 ; i++){
+                    if ( player_mana[i] >= creature_mana[i]){
+                        totalplayermana += player_mana[i] ;
+                        totalcreaturemana += creature_mana[i] ;
+                    }
+                    else {
+                        cout << " You dont have enough mana " << endl ;
+                        return "";
+                    }
+                }
+                totalcreaturemana += creature_mana[5];
+                if (totalplayermana >= totalcreaturemana) {
+
+                    for (int i = 0; i < 5; i++) {
+                        player_mana[i] -= creature_mana[i];
+                    }
+                    int colorlessmana = creature_mana[5];
+                    z = 0 ;
+                    while (colorlessmana != 0) {
+
+                        if ( player_mana[z] > 0){
+                            player_mana[z] -- ;
+                            colorlessmana --;
+
+                        }
+
+                        z++ ;
+                        if(z == 5){
+                            z = 0 ;
+                        }
+                    }
+
+                }
+                else {
+                    cout << " You don't have enough mana  " << endl ;
+                    return "";
+                }
+
+                available_mana['B'] = player_mana[0];
+                available_mana['G'] = player_mana[1];
+                available_mana['L'] = player_mana[2];
+                available_mana['R'] = player_mana[3];
+                available_mana['W'] = player_mana[4];
+
+                remove_hand_card(i,"S") ;
+                cout <<  index  << " card has been played "  <<  endl ;
+
+                return  index ;
+            }
+        }
+        cout << " You dont have such card "  << endl ;
+    }
+
+    void damege_HP (int x ){
+        HP -= x ;
+
+    }
+
+    void clear_mana (){
+        for ( int i =0 ; i < 5 ; i ++){
+            available_mana[mana[i]]  = 0  ;
+        }
+    }
+
+    void back_to_original (){
+            for ( int i =0 ; i < get<1>(in_Play).size() ; i++){
+                get<1>(in_Play).at(i).return_to_base() ;
+            }
+    }
+
+    void print_mana(){
+        cout << "available mana are : " ;
+        for ( int i =0 ; i < 5 ; i ++){
+            cout << mana[i] << ":" << available_mana[mana[i]] << " , " ;
+        }
+        cout << endl ;
+    }
+
+
+
+
+};
+
+player Player2 ;
+player Player1 ;
+
+
+class Effect {
+protected:
+
+    int  player_number ;
+    // dear hocam , we tried to do this part using Smart Pointers as you can see
+    // but all out tries ended by failing so we had the choice
+    // either we double the code for Player 1 and Player 2 or we can use a raw Pointer
+    // and we decided to make the code more efficient by reducing the code as much as possible
+    // thanks for your understanding <3
+
+    //std::shared_ptr<player> PointingPlayer = std::make_shared<player>();
+   // std::shared_ptr<player> PointingEnemy = std::make_shared<player>();
+    player *PointingPlayer ;
+    player *PointingEnemy ;
+
+public:
+//    Effect(shared_ptr<player> x , shared_ptr<player> y) : PointingPlayer(move(x)) , PointingEnemy(move(y)) {
+//    }
+    Effect(player *x , player *y)   : PointingPlayer(x) , PointingEnemy(y) {
+        //PointingEnemy = make_unique<player>(*y) ;
+     //   PointingEnemy = y;
+     //   PointingPlayer = x ;
+    }
+    void play_effect(string x ){
+
+        if (x == "Terror"){
+            DestroyCreatureEffect();
+        }
+        else if (x == "Flood"){
+            DestroyLandEffect();
+        }
+        else if (x == "Disenchant"){
+            DestroyEnchantmentEffect();
+        }
+        else if (x == "Holy_War" || x == "Unholy_War" || x == "Holy_Light" ){
+            AlterCreatureCard_HP_attack(x);
+        }
+        else if ( x == "Lightning_Bolt" || x == "Plague"){
+            DamageCard_player(x) ;
+        }
+        else if ( x == "Reanimate"){
+            CreatureCard_back_to_live() ;
+        }
+        else if (x == "Rage" || x == "Restrain" || x == "Slow" ){
+            change_ability(x);
+        }
+}
+
+    void DestroyCreatureEffect(){
+        vector<creatureCard> v = get<1>(PointingEnemy->get_in_play());
+      //  vector<creatureCard> v = get<1>(Player2.get_in_play());
+            if (v.size() == 0){
+                cout << " there is no creature_card in the enemy play pile to destroy " << endl ;
+                return;
+            }
+        cout << " Choose the creature_card which you want to destroy " << endl ;
+        for ( int i =0 ; i  < v.size() ; i++ ){
+            cout << v.at(i).getName()<< " , " ;
+        }
+        string index ;
+        cout << endl ;
+        cin >> index ;
+        for ( int i =0 ; i  < v.size() ; i++ ){
+            if(index == v.at(i).getName()){
+                PointingEnemy->add_to_graveyard(v.at(i));
+                PointingEnemy->remove_play_pile(i,"C") ;
+                std::cout << "Target creature card in play is destroyed! "<<std::endl;
+                return;
+            }
+
+        }
+        cout << "There is no such card" << endl ;
+        DestroyCreatureEffect();
+
+
+    }
+    void DestroyLandEffect(){
+
+        vector<landcard> v = get<0>(PointingEnemy->get_in_play());
+        if (v.size() == 0){
+            cout << " there is no land_card in the enemy play pile to destroy " << endl ;
+            return;
+        }
+        cout << " Choose the land_card which you want to destroy: " << endl ;
+        for ( int i =0 ; i  < v.size() ; i++ ){
+            cout << v.at(i).getName()<< " , " ;
+        }
+        string index ;
+        cout << endl ;
+        cin >> index;
+        for ( int i =0 ; i  < v.size() ; i++ ){
+            if(index == v.at(i).getName()){
+                PointingEnemy->remove_play_pile(i,"L") ;
+                std::cout << "Target land card in play is destroyed! "<<std::endl;
+                return;
+            }
+
+        }
+        cout << "There is no such card" << endl ;
+        DestroyLandEffect();
+    }
+
+    void DestroyEnchantmentEffect(){
+        vector<EnchantmentCard> v = get<3>(PointingEnemy->get_in_play());
+
+        if (v.size() == 0){
+            cout << " there is no enchantment_card in the enemy play pile to destroy " << endl ;
+            return;
+        }
+        cout << " Choose the enchantment_card which you want to destroy: " << endl ;
+        for ( int i =0 ; i  < v.size() ; i++ ){
+            cout << v.at(i).getName()<< " , " ;
+        }
+        string index ;
+        cout << endl ;
+        cin >> index ;
+        for ( int i =0 ; i  < v.size() ; i++ ){
+            if(index == v.at(i).getName()){
+                PointingEnemy->remove_play_pile(i,"E") ;
+                std::cout << "Target enchantment card in play is destroyed! "<<std::endl;
+                return;
+            }
+
+        }
+        cout << "There is no such card" << endl ;
+        DestroyEnchantmentEffect();
+    }
+
+    void AlterCreatureCard_HP_attack(string x ){
+
+        //string colors[] = {"Black", "White", "Red", "Green", "Blue"};
+
+     //   auto cc = std::make_unique<creatureCard>();
+
+       // vector<creatureCard> v1 = get<1>(PointingPlayer->what_is_the_Hand());
+        vector<creatureCard> v2 = get<1>(PointingPlayer->get_in_play());
+       // vector<creatureCard> v3 = get<1>(PointingEnemy->what_is_the_Hand());
+        vector<creatureCard> v4 = get<1>(PointingEnemy->get_in_play());
+
+        string c;
+        char op;
+        int hp,ap;
+
+        if(x == "Holy_War") {
+            c = "White";
+            hp = 1;
+            ap = 1;
+//            for (int i = 0; i < v1.size(); ++i) {
+//                if (v1[i].getColor() == c) {
+//                    PointingPlayer->change_creature_HP_inHand(i,hp, false);
+//                    PointingPlayer->change_creature_AP_inHand(i,ap);
+//                }
+//            }
+            for (int i = 0; i < v2.size(); ++i) {
+                if (v2[i].getColor() == c) {
+                    PointingPlayer->change_creature_HP_inPlay(i,hp, false);
+                    PointingPlayer->change_creature_AP_inPlay(i,ap);
+                }
+            }
+        }
+
+        else if(x == "Holy_Light") {
+            c = "Black";
+            hp = -1;
+            ap = -1;
+//            for (auto i = 0; i < v3.size(); ++i) {
+//                if (v3[i].getColor() == c) {
+//                    PointingEnemy->change_creature_HP_inHand(i,hp, false);
+//                    PointingEnemy->change_creature_AP_inHand(i,ap);
+//                    PointingEnemy->check_creature(i);
+//                }
+//            }
+            for (auto i = 0; i < v4.size(); ++i) {
+                if (v4[i].getColor() == c) {
+                    PointingEnemy->change_creature_HP_inPlay(i,hp, false);
+                    PointingEnemy->change_creature_AP_inPlay(i,ap);
+                    PointingEnemy->check_creature(i);
+                }
+            }
+
+        }
+
+        else if(x == "Unholy_War") {
+            c = "Black";
+            hp = 0;
+            ap = 2;
+
+//            for (auto i = 0; i < v1.size(); ++i) {
+//                if (v1[i].getColor() == c) {
+//                    PointingPlayer->change_creature_HP_inHand(i,hp, false);
+//                    PointingPlayer->change_creature_AP_inHand(i,ap);
+//                }
+//            }
+            for (auto i = 0; i < v2.size(); ++i) {
+                if (v2[i].getColor() == c) {
+                    PointingPlayer->change_creature_HP_inPlay(i,hp , false);
+                    PointingPlayer->change_creature_AP_inPlay(i,ap);
+                }
+            }
+        }
+
+        std::cout <<"All of "<< c <<" creatures cards get attack power : " << ap << " , HP : " << hp << endl;
+
+
+
+    }
+
+
+
+    void DamageCard_player(string x){
+
+        int X;
+
+
+        if(x == "Lightning_Bolt") {
+            X = 2;
+
+            //TARGET CREATURE CARD OR PLAY
+            cout << "Do you want to damage creature card(1) or player(2)? Answer 1 or 2 " << endl;
+
+            string ans;
+
+            cin >> ans ;
+
+            if (ans == "1") {
+                vector<creatureCard> v = get<1>(PointingEnemy->get_in_play());
+                if (v.size() == 0){
+                    cout << " there is no creature_card in the enemy play pile to deal damage to  " << endl ;
+                    DamageCard_player(x);
+                    return;
+                }
+                cout << " Choose the creature_name which you want to deal damage to  " << endl ;
+                for ( int i =0 ; i  < v.size() ; i++ ){
+                    cout << v.at(i).getName()<< " , " ;
+                }
+                string index ;
+                cout << endl ;
+                cin >> index ;
+                for ( int i =0 ; i  < v.size() ; i++ ){
+                    if(index == v.at(i).getName()){
+                        PointingEnemy->change_creature_HP_inPlay(i,-X , true ) ;
+                        std::cout << "the effect on the target_creature has successfully done ! "<<std::endl;
+                        PointingEnemy->check_creature(i) ;
+                        return;
+                    }
+
+                }
+                cout << "There is no such card" << endl ;
+                DamageCard_player(x);
+
+            }
+            else  {
+                PointingEnemy->damege_HP(X);
+                cout << "Player HP is :" <<  PointingEnemy->Get_HP() << endl ;
+
+            }
+
+        }
+
+        else if(x == "Plague") {
+            X = 1;
+            vector<creatureCard> v = get<1>(PointingEnemy->get_in_play());
+            for ( int i =0 ; i  < v.size() ; i++ ){
+                PointingEnemy->change_creature_HP_inPlay(i , -X , false) ;
+                PointingEnemy->check_creature(i) ;
+            }
+            cout << "the effect on the all creatures has successfully done ! "<< endl;
+        }
+
+
+
+
+    }
+
+    void CreatureCard_back_to_live(){
+
+        vector<creatureCard> v1 = PointingPlayer->get_in_graveyard();
+       // vector<creatureCard> v2 = get<1>(PointingPlayer->get_in_Hand());
+
+        cout << " Choose the creature which you want it back : " << endl ;
+        for ( int i =0 ; i  < v1.size() ; i++ ){
+            cout << v1.at(i).getName() << " , "  ;
+        }
+        string index ;
+        cout << endl ;
+       cin >> index ;
+
+        for ( int i =0 ; i  < v1.size() ; i++ ){
+            if(index == v1.at(i).getName()){
+                PointingPlayer->insertcreature_card_toHand(v1.at(i)) ;
+                PointingPlayer->remove_graveyard(i) ;
+                cout << "the creature card : " << index << " moved from your discard pile back to your hand " << endl;
+                return;
+            }
+
+        }
+
+    }
+
+
+    void change_ability(string x ){
+
+        vector<creatureCard> v1 = get<1>(PointingPlayer->get_in_play());
+        vector<creatureCard> v2 = get<1>(PointingEnemy->get_in_play());
+        if(x == "Rage"){
+
+            cout << "Please choose the target creature card to give Trample : " << endl;
+
+            for (int i = 0; i < v1.size(); i++) {
+                cout << v1[i].getName() << " , ";
+            }
+            cout << endl ;
+            string ans;
+            cin >> ans ;
+            for (int i = 0; i < v1.size(); i++) {
+
+                if (ans == v1.at(i).getName()) {
+                    PointingPlayer->change_creature_ability(i ,"Trample");
+                    cout << "The creature : " << v1.at(i).getName() << " gained Trample ability " << endl ;
+                    return;
+                }
+            }
+        }
+
+        else if ( x == "Slow" ) {
+
+            cout << "Please choose the target creature card to lose First Strike : " << endl;
+
+            for (int i = 0; i < v2.size(); i++) {
+                cout << v2[i].getName() << " , ";
+            }
+            cout << endl ;
+            string ans;
+            cin >> ans ;
+            for (int i = 0; i < v2.size(); i++) {
+
+                if (ans == v2.at(i).getName()) {
+                 if ( v2.at(i).has_first_strike()){
+                     PointingEnemy->change_creature_ability(i ,"None");
+                 }
+                 else{
+                     cout << " this creature doesn't has First Strike ability " << endl ;
+                 }
+                    cout << "The creature : " << v2.at(i).getName() << " lost First Strike ability " << endl ;
+                    return;
+                }
+            }
+        }
+        else if(x == "Restrain") {
+
+            for (int i = 0; i < v2.size(); i++) {
+                if(v2[i].getColor() == "Green" && v2[i].has_trample()) {
+                    PointingEnemy->change_creature_ability(i , "None") ;
+                }
+            }
+            cout << "the effect on the all creatures has successfully done ! "<< endl;
+
+        }
+
+
+    }
+
+};
+
+
+void checkhealth(){
+    if (Player2.Get_HP()  <= 0 ){
+        cout << "Player 1 won and his health is " << Player1.Get_HP() ;
+        game_over = true;
+    }
+    else  if ( Player1.Get_HP()  <= 0 ){
+        cout << "Player 2 won and his health is "  << Player2.Get_HP() ;
+        game_over = true;
+    }
+}
+
+
+
+
+int main() {
+//shared_ptr<player> x = make_shared<player>(Player1);
+//shared_ptr<player> y = make_shared<player>(Player2);
+//    Effect pl1(x, y);
+//    Effect pl2(y, x);
+    Effect pl1(&Player1, &Player2);
+    Effect pl2(&Player2, &Player1);
+    Player1.setmana();
+    Player2.setmana();
+
+
+    srand(time(NULL));
+    //------------------------------
+    landcard land1("Forest", "G");
+    landcard land2("Island", "L");
+    landcard land3("Mountain", "R");
+    landcard land4("Plains", "W");
+    landcard land5("Swamp", "B");
+    //-----------------------------------------------------------------------
+    creatureCard cre1("Soldier", "White", 1, 1, "W");
+    creatureCard cre2("Armored_Pegasus", "white", 2, 1, "1W");
+    creatureCard cre3("White_Knight", "White", 2, 2, "WW");
+    creatureCard cre4("Angry_Bear", "Green", 2, 3, "2G");
+    creatureCard cre5("Guard", "White", 5, 2, "2WW");
+    creatureCard cre6("WereWolf", "Green", 6, 4, "2GW");
+    creatureCard cre7("Skeleton", "Black", 1, 1, "B");
+    creatureCard cre8("Ghost", "Black", 1, 2, "1B");
+    creatureCard cre9("Black_Knight", "Black", 2, 2, "BB");
+    creatureCard cre10("Orc_Maniac", "Red", 1, 4, "2R");
+    creatureCard cre11("Hobgoblin", "Red", 3, 3, "1RB");
+    creatureCard cre12("Vampire", "Black", 3, 6, "3B");
+    //----------------------------------------------------------------------
+    EnchantmentCard En1("Rage", "Green", "G", "1 Target creature gains Trample");
+    EnchantmentCard En2("Holy_War", "White", "1W", "All white creatures gain +1/+1");
+    EnchantmentCard En3("Holy_Light", "White", "1W", "All black creatures gain -1/-1");
+    EnchantmentCard En4("Unholy_War", "Black", "1B", "All black creatures gain +2/+0");
+    EnchantmentCard En5("Restrain", "Red", "2R", "All green creatures lose Trample");
+    EnchantmentCard En6("Slow", "Black", "B", "1 Target creature loses First Strike");
+    //------------------------------------------------------------------------------------------------------
+    SorceryCard So1("Disenchant", "White", "1W", "Destroy 1 Target Enchantment");
+    SorceryCard So2("Lightning_Bolt", "Green", "1G", "Deal 2 dmg to target creature or player");
+    SorceryCard So3("Flood", "Green", "1GW", "Destroy 1 Target Land");
+    SorceryCard So4("Reanimate", "Black", "B", "Return 1 character card from discard to hand");
+    SorceryCard So5("Plague", "Black", "2B", "Deal 1 dmg to all creatures");
+    SorceryCard So6("Terror", "Black", "1B", "Destroy 1 Target Creature");
+    //-------------------------------------------------------------------------------------------------------------
+
+    tuple<vector<landcard>, vector<creatureCard>, vector<SorceryCard>, vector<EnchantmentCard>> Deck1;
+    get<0>(Deck1).insert(get<0>(Deck1).begin(), 5, land4);
+    get<0>(Deck1).insert(get<0>(Deck1).begin(), 3, land1);
+    get<0>(Deck1).insert(get<0>(Deck1).begin(), 1, land2);
+    get<1>(Deck1).insert(get<1>(Deck1).begin(), 3, cre1);
+    get<1>(Deck1).insert(get<1>(Deck1).begin(), 2, cre2);
+    get<1>(Deck1).insert(get<1>(Deck1).begin(), 2, cre3);
+    get<1>(Deck1).insert(get<1>(Deck1).begin(), 1, cre4);
+    get<1>(Deck1).insert(get<1>(Deck1).begin(), 1, cre5);
+    get<1>(Deck1).insert(get<1>(Deck1).begin(), 1, cre6);
+    get<2>(Deck1).insert(get<2>(Deck1).begin(), 2, So3);
+    get<2>(Deck1).insert(get<2>(Deck1).begin(), 1, So1);
+    get<2>(Deck1).insert(get<2>(Deck1).begin(), 1, So2);
+    get<3>(Deck1).insert(get<3>(Deck1).begin(), 1, En1);
+    get<3>(Deck1).insert(get<3>(Deck1).begin(), 1, En2);
+    get<3>(Deck1).insert(get<3>(Deck1).begin(), 1, En3);
+
+    Player1.insertdeck(Deck1);
+
+    tuple<vector<landcard>, vector<creatureCard>, vector<SorceryCard>, vector<EnchantmentCard> > Deck2;
+    get<0>(Deck2).insert(get<0>(Deck2).begin(), 5, land5);
+    get<0>(Deck2).insert(get<0>(Deck2).begin(), 3, land3);
+    get<0>(Deck2).insert(get<0>(Deck2).begin(), 1, land2);
+    get<1>(Deck2).insert(get<1>(Deck2).begin(), 3, cre7);
+    get<1>(Deck2).insert(get<1>(Deck2).begin(), 2, cre8);
+    get<1>(Deck2).insert(get<1>(Deck2).begin(), 2, cre9);
+    get<1>(Deck2).insert(get<1>(Deck2).begin(), 1, cre10);
+    get<1>(Deck2).insert(get<1>(Deck2).begin(), 1, cre11);
+    get<1>(Deck2).insert(get<1>(Deck2).begin(), 1, cre12);
+    get<2>(Deck2).insert(get<2>(Deck2).begin(), 2, So6);
+    get<2>(Deck2).insert(get<2>(Deck2).begin(), 1, So5);
+    get<2>(Deck2).insert(get<2>(Deck2).begin(), 1, So4);
+    get<3>(Deck2).insert(get<3>(Deck2).begin(), 1, En4);
+    get<3>(Deck2).insert(get<3>(Deck2).begin(), 1, En5);
+    get<3>(Deck2).insert(get<3>(Deck2).begin(), 1, En6);
+
+    Player2.insertdeck(Deck2);
+    //--------------------------------------------
+    int random;
+    for (int i = 0; i < 5; i++) {
+        Player1.DrawCard();
+    }
+    for (int i = 0; i < 5; i++) {
+        Player2.DrawCard();
+    }
+    //------------------------------------------------------
+    string S_index;
+    int I_index = 0;
+    //tuple<vector<landcard>,vector<creatureCard>,vector<SorceryCard>,vector<EnchantmentCard> > P1hand = Player1.what_is_the_Hand() ;
+    // tuple<vector<landcard>,vector<creatureCard>,vector<SorceryCard>,vector<EnchantmentCard> > P2hand = Player2.what_is_the_Hand() ;
+    int round = 0 ;
+
+
+    cout << " Welcome to Magic of the gathering card game " << endl;
+    while (Player1.Get_HP() > 0 && Player2.Get_HP() > 0) {
+        round  ++ ;
+        srand(time(NULL));
+        canplaylandcard = true;
+        cout << " Player 1 turn " << endl;
+        cout << " first main phase " << endl;
+        cout << " Player 1 Draws a card " << endl;
+        if (Player1.Draw()) {
+            Player1.DrawCard();
+        }
+        if (game_over) { return 0; }
+
+        Player1.Un_Tap_All_Cards();
+        Player1.clear_mana();
+
+        cout << "Player 1 HP : " << Player1.Get_HP()  << endl ;
+        cout << "Player 2 HP : " << Player2.Get_HP()  << endl ;
+
+        cout << "Player 1 in hand card's are : " << endl;
+        Player1.printthehand();
+        cout << endl ;
+        cout << "Player 1 in play card's are : " << endl;
+        Player1.printtheplay();
+        cout << endl ;
+        cout << "Player 2 in play card's are : " << endl;
+        Player2.printtheplay();
+        cout << endl ;
+
+        while (true) {
+            cout << "  Do you want to play a \"land_card\" , \" creature_card \" , \" enchantment_card \" , \" sorcery_card \"  or you want to \"tap\" a land_card or \" NEXT \" to go to the next phase " << endl;
+            cin >> S_index;
+            if (S_index == "land_card") {
+                if (canplaylandcard) {
+                    Player1.landfunction();
+                } else {
+                    cout << "You had already played land_card in this phase " << endl;
+                }
+            } else if (S_index == "creature_card") {
+                Player1.creatureFunction();
+            }
+            else if (S_index == "enchantment_card") {
+                string x = Player1.enchantmentFunction();
+                pl1.play_effect(x);
+            }
+            else if (S_index == "sorcery_card") {
+                string x = Player1.sorceryFunction();
+                pl1.play_effect(x);
+            }
+            else if (S_index == "tap") {
+                Player1.tap_land_card();
+            }
+            else if (S_index == "NEXT") {
+                break;
+            }
+            checkhealth();if(game_over){return 0;}
+        }
+
+
+        cout << "Combat " << endl;
+        while (true) {
+            cout << " Do you want to attack by a \"creature_card \"  or \" NEXT \" to go to the next phase  " << endl ;
+            cin >> S_index;
+            if (S_index == "creature_card") {
+                cout << " What is the creature name ? " << endl;
+
+                vector<creatureCard> x = (get<1>(Player1.get_in_play()));
+                for (int i = 0; i < x.size(); i++) {
+                    if  (!x.at(i).TAPcondition()){   cout << x.at(i).getName() << " , ";}
+
+                }
+                cout << endl ;
+                cin >> S_index;
+                for (int i = 0; i < x.size(); i++) {
+                    if (x.at(i).getName() == S_index && !x.at(i).TAPcondition()) {
+                        Player1.change_creature_tap(i,true);
+                        cout << "Player 1 is attacking \n Player 2  type \"yes\" to defend yourself or type \"no\" to take the damage like a hero " << endl ;
+                        cin >> S_index ;
+                        if (S_index == "no"){
+                            Player2.damege_HP( x.at(i).get_attack_damage()) ;
+                            cout << "Player 2 HP is : " << Player2.Get_HP()  << endl ;
+                        }
+                        else if (S_index == "yes"){
+                            vector<creatureCard> y = get<1>(Player2.get_in_play());
+
+                            cout << "choose a creature to defend you  : "  ;
+                            for (int i = 0; i < y.size(); i++) {
+                               if ( !y.at(i).TAPcondition()) {
+                                   cout << y.at(i).getName() << " , ";
+                               }
+                            }
+                            cout << endl ;
+                            cin >> S_index ;
+                            for (int j = 0; j < y.size(); j++) {
+                                if ( y.at(j).getName() == S_index && !y.at(j).TAPcondition()) {
+                                    if ((y.at(i).has_first_strike()&&x.at(i).has_first_strike()) || (!y.at(i).has_first_strike() && !x.at(i).has_first_strike()) ){
+                                        Player2.change_creature_HP_inPlay(j, -x.at(i).get_attack_damage() , true );
+                                        Player1.change_creature_HP_inPlay(i, -y.at(j).get_attack_damage() , true);
+                                        if (Player2.get_creature_HP(j) < 0  && x.at(i).has_trample()){
+                                            int extra_damage = Player2.get_creature_HP(j) ;
+                                            Player2.damege_HP(-extra_damage) ;
+                                            cout << "Player 2 HP is : " << Player2.Get_HP()  << endl ;
+
+                                        }
+
+                                        Player1.check_creature(i);
+                                        Player2.check_creature(j);
+
+                                    }
+                                    else if ( x.at(i).has_first_strike() ){
+                                        Player2.change_creature_HP_inPlay(j, -x.at(i).get_attack_damage() , true);
+                                        if (Player2.get_creature_HP(j) <= 0 ){
+                                            cout <<  " because " << x.at(i).getName() << " has first strike " << endl ;
+                                        }
+                                        else {
+                                            Player1.change_creature_HP_inPlay(i, -y.at(j).get_attack_damage() , true);
+                                        }
+
+                                        if (Player2.get_creature_HP(j) < 0  && x.at(i).has_trample()){
+                                            int extra_damage = Player2.get_creature_HP(j) ;
+                                            Player2.damege_HP(-extra_damage) ;
+                                            cout << "Player 2 HP is : " << Player2.Get_HP()  << endl ;
+
+                                        }
+                                        Player1.check_creature(i);
+                                        Player2.check_creature(j);
+                                    }
+                                    else if ( y.at(j).has_first_strike() ){
+                                        Player1.change_creature_HP_inPlay(i, -y.at(j).get_attack_damage() , true);
+                                        if (Player1.get_creature_HP(i) <= 0 ){
+                                            cout <<  " because " << y.at(j).getName() << " has first strike " << endl ;
+                                        }
+                                        else {
+                                            Player2.change_creature_HP_inPlay(j, -x.at(i).get_attack_damage() , true);
+                                        }
+
+                                        if (Player2.get_creature_HP(j) < 0  && x.at(i).has_trample() && Player1.get_creature_HP(i) > 0 ){
+                                            int extra_damage = Player2.get_creature_HP(j) ;
+                                            Player2.damege_HP(-extra_damage) ;
+                                            cout << "Player 2 HP is : " << Player2.Get_HP()  << endl ;
+
+                                        }
+                                        Player1.check_creature(i);
+                                        Player2.check_creature(j);
+                                    }
+
+
+
+
+
+                                }
+                            }
+
+                        }
+
+                        break;
+
+                    }
+                }
+
+
+            }
+            else if (S_index == "NEXT") {
+                break;
+            }
+            checkhealth();if(game_over){return 0;}
+        }
+
+        cout << "Second play phase " << endl;
+        while (true) {
+            cout << " Do you want to play a \"land_card\" , \" creature_card \" , \" enchantment_card \" , \" sorcery_card \"  or you want to \"tap\" a land_card or \" NEXT \" to go to the next phase " << endl;
+            cin >> S_index;
+            if (S_index == "land_card") {
+                if (canplaylandcard) {
+                    Player1.landfunction();
+                } else {
+                    cout << "You had already played land_card in this phase " << endl;
+                }
+            } else if (S_index == "creature_card") {
+                Player1.creatureFunction();
+            }
+            else if (S_index == "enchantment_card") {
+                string x = Player1.enchantmentFunction();
+                pl1.play_effect(x);
+            }
+            else if (S_index == "sorcery_card") {
+                string x = Player1.sorceryFunction();
+                pl1.play_effect(x);
+            }
+            else if (S_index == "tap") {
+                Player1.tap_land_card();
+            }
+            else if (S_index == "NEXT") {
+                break;
+            }
+            checkhealth();if(game_over){return 0;}
+        }
+        cout << " Player 1 end phase " << endl ;
+        checkhealth();if(game_over){return 0;}
+
+//-------------------------------------------------------------------------------------------------------------------------------------
+        canplaylandcard = true;
+        cout << " Player 2 turn " << endl;
+        cout << " first main phase " << endl;
+        cout << " Player 2 Draws a card " << endl;
+        if (Player2.Draw()) {
+            Player2.DrawCard();
+        }
+        if (game_over) { return 0; }
+
+        Player2.Un_Tap_All_Cards();
+        Player1.clear_mana();
+
+
+        cout << "Player 1 HP : " << Player1.Get_HP()  << endl ;
+        cout << "Player 2 HP : " << Player2.Get_HP()  << endl ;
+
+        cout << "Player 2 in hand card's are : " << endl;
+        Player2.printthehand();
+        cout << endl ;
+        cout << "Player 1 in play card's are : " << endl;
+        Player1.printtheplay();
+        cout << endl ;
+        cout << "Player 2 in play card's are : " << endl;
+        Player2.printtheplay();
+        cout << endl ;
+        while (true) {
+            cout << " Do you want to play a \"land_card\" , \" creature_card \" , \" enchantment_card \" , \" sorcery_card \"  or you want to \"tap\" a land_card or \" NEXT \" to go to the next phase " << endl;
+            cin >> S_index;
+            if (S_index == "land_card") {
+                if (canplaylandcard) {
+                    Player2.landfunction();
+                } else {
+                    cout << "You had already played land_card in this phase " << endl;
+                }
+            } else if (S_index == "creature_card") {
+                Player2.creatureFunction();
+            }
+            else if (S_index == "enchantment_card") {
+                string x = Player2.enchantmentFunction();
+                pl2.play_effect(x);
+            }
+            else if (S_index == "sorcery_card") {
+                string x = Player2.sorceryFunction();
+                pl2.play_effect(x);
+            }
+            else if (S_index == "tap") {
+                Player2.tap_land_card();
+            }
+            else if (S_index == "NEXT") {
+                break;
+            }
+            checkhealth();if(game_over){return 0;}
+        }
+
+
+        cout << "Combat " << endl;
+        while (true) {
+            cout << " Do you want to attack by a \"creature_card \"  or \" NEXT \" to go to the next phase  " << endl ;
+            cin >> S_index;
+            if (S_index == "creature_card") {
+                cout << " What is the creature name ? " << endl;
+
+                vector<creatureCard> x = (get<1>(Player2.get_in_play()));
+                for (int i = 0; i < x.size(); i++) {
+                    if  (!x.at(i).TAPcondition()){ cout << x.at(i).getName() << " , ";}
+
+                }
+                cout << endl ;
+                cin >> S_index;
+                for (int i = 0; i < x.size(); i++) {
+                    if (x.at(i).getName() == S_index && !x.at(i).TAPcondition()) {
+                        Player2.change_creature_tap(i,true);
+                        cout << "Player 2 is attacking \n Player 2 do you want to defend or take the damage is a hero ? type \"yes\" or \"no\" " << endl ;
+                        cin >> S_index ;
+                        if (S_index == "no"){
+                            Player1.damege_HP( x.at(i).get_attack_damage()) ;
+                            cout << "Player 1 HP is : " << Player1.Get_HP()  << endl ;
+                        }
+                        else if (S_index == "yes"){
+                            vector<creatureCard> y = get<1>(Player1.get_in_play());
+                            cout << "choose a creature to defend you " << endl ;
+                            for (int i = 0; i < y.size(); i++) {
+                                if ( !y.at(i).TAPcondition()) {
+                                    cout << y.at(i).getName() << " , ";
+                                }
+                            }
+                            cout << endl ;
+                            cin >> S_index ;
+                            for (int j = 0; j < y.size(); j++) {
+                                if ( y.at(j).getName() == S_index && !y.at(j).TAPcondition()) {
+                                    if ((y.at(i).has_first_strike()&&x.at(i).has_first_strike()) || (!y.at(i).has_first_strike() && !x.at(i).has_first_strike()) ){
+                                        Player1.change_creature_HP_inPlay(j, -x.at(i).get_attack_damage() , true);
+                                        Player2.change_creature_HP_inPlay(i, -y.at(j).get_attack_damage() , true);
+                                        if (Player1.get_creature_HP(j) < 0  && x.at(i).has_trample()){
+                                            int extra_damage = Player1.get_creature_HP(j) ;
+                                            Player1.damege_HP(-extra_damage) ;
+                                            cout << "Player 1 HP is : " << Player1.Get_HP()  << endl ;
+
+                                        }
+
+                                        Player2.check_creature(i);
+                                        Player1.check_creature(j);
+
+                                    }
+                                    else if ( x.at(i).has_first_strike() ){
+                                        Player1.change_creature_HP_inPlay(j, -x.at(i).get_attack_damage() , true);
+                                        if (Player1.get_creature_HP(j) <= 0 ){
+                                            cout <<  " because " << x.at(i).getName() << " has first strike " << endl ;
+                                        }
+                                        else {
+                                            Player2.change_creature_HP_inPlay(i, -y.at(j).get_attack_damage() , true);
+                                        }
+
+                                        if (Player1.get_creature_HP(j) < 0  && x.at(i).has_trample()){
+                                            int extra_damage = Player1.get_creature_HP(j) ;
+                                            Player1.damege_HP(-extra_damage) ;
+                                            cout << "Player 1 HP is : " << Player1.Get_HP()  << endl ;
+
+                                        }
+                                        Player2.check_creature(i);
+                                        Player1.check_creature(j);
+                                    }
+                                    else if ( y.at(j).has_first_strike() ){
+                                        Player2.change_creature_HP_inPlay(i, -y.at(j).get_attack_damage() , true);
+                                        if (Player2.get_creature_HP(i) <= 0 ){
+                                            cout <<  " because " << y.at(j).getName() << " has first strike " << endl ;
+                                        }
+                                        else {
+                                            Player1.change_creature_HP_inPlay(j, -x.at(i).get_attack_damage() , true);
+                                        }
+
+                                        if (Player1.get_creature_HP(j) < 0  && x.at(i).has_trample() && Player2.get_creature_HP(i) > 0 ){
+                                            int extra_damage = Player1.get_creature_HP(j) ;
+                                            Player1.damege_HP(-extra_damage) ;
+                                            cout << "Player 1 HP is : " << Player1.Get_HP()  << endl ;
+
+                                        }
+                                        Player2.check_creature(i);
+                                        Player1.check_creature(j);
+                                    }
+
+
+
+
+
+                                }
+                            }
+
+                        }
+
+                        break;
+
+                    }
+                }
+
+
+            }
+            else if (S_index == "NEXT") {
+                break;
+            }
+            checkhealth();if(game_over){return 0;}
+        }
+
+        cout << "Second play phase " << endl;
+        while (true) {
+            cout
+                    << " \n Do you want to play a \"land_card\" , \" creature_card \" , \" enchantment_card \" , \" sorcery_card \"  or you want to \"tap\" a land_card or \" NEXT \" to go to the next phase "
+                    << endl;
+            cin >> S_index;
+            if (S_index == "land_card") {
+                if (canplaylandcard) {
+                    Player2.landfunction();
+                } else {
+                    cout << "You had already played land_card in this phase " << endl;
+                }
+            } else if (S_index == "creature_card") {
+                Player2.creatureFunction();
+            }
+            else if (S_index == "enchantment_card") {
+                string x = Player2.enchantmentFunction();
+                pl2.play_effect(x);
+            }
+            else if (S_index == "sorcery_card") {
+                string x = Player2.sorceryFunction();
+                pl2.play_effect(x);
+            }
+            else if (S_index == "tap") {
+                Player2.tap_land_card();
+            }
+            else if (S_index == "NEXT") {
+                break;
+            }
+            checkhealth();if(game_over){return 0;}
+        }
+
+
+
+
+        checkhealth();if(game_over){return 0;}
+        cout << " End of Round  : " << round << endl ;
+        Player1.back_to_original() ;
+        Player2.back_to_original() ;
+        vector<EnchantmentCard> v1 = get<3>(Player1.get_in_play()) ;
+        for ( int i = 0 ; i < v1.size() ; i++){
+            pl1.play_effect(v1.at(i).getName());
+        }
+        vector<EnchantmentCard> v2 = get<3>(Player2.get_in_play()) ;
+        for ( int i = 0 ; i < v2.size() ; i++){
+            pl2.play_effect(v2.at(i).getName());
+        }
+    }
+
+
+
+
+
+    return 0;
+}
